@@ -1,0 +1,197 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>abriellStore</title>
+  <link rel="stylesheet" href="style.css">
+</head>
+<body>
+
+  <!-- Bar Status Admin (Muncul HANYA Jika Admin Login) -->
+  <div id="admin-bar" class="admin-bar hidden">
+    <span>🛡️ Mode Administrator Aktif</span>
+    <button onclick="logoutAdmin()" class="btn-logout">Keluar Admin</button>
+  </div>
+
+  <!-- Header Navigasi Toko -->
+  <header>
+    <div class="nav-container">
+      <div class="logo" onclick="showShopView()">abriellStore</div>
+      
+      <!-- Kolom Pencarian -->
+      <div class="search-box">
+        <input type="text" id="search-input" placeholder="Cari produk..." oninput="filterProducts()">
+      </div>
+
+      <div class="nav-actions">
+        <!-- Dropdown Pemilih Mata Uang (Multi-Currency) -->
+        <select id="currency-select" class="currency-select" onchange="changeCurrency(this.value)">
+          <option value="IDR">🇮🇩 IDR (Rp)</option>
+          <option value="USD">🇺🇸 USD ($)</option>
+          <option value="EUR">🇪🇺 EUR (€)</option>
+          <option value="SGD">🇸🇬 SGD (S$)</option>
+          <option value="MYR">🇲🇾 MYR (RM)</option>
+          <option value="JPY">🇯🇵 JPY (¥)</option>
+        </select>
+
+        <!-- Tombol Keranjang -->
+        <button class="cart-btn" onclick="openCartModal()">
+          🛒 Keranjang <span id="cart-count" class="badge">0</span>
+        </button>
+      </div>
+    </div>
+  </header>
+
+  <main class="container">
+
+    <!-- ================= TAMPILAN TOKO (PUBLIK) ================= -->
+    <section id="shop-view">
+      <div class="hero-banner">
+        <h1>Selamat Datang di ABRIELLSTORE.id</h1>
+        <p>Belanja mudah dengan dukungan mata uang internasional!</p>
+      </div>
+
+      <div class="shop-header">
+        <h2>Katalog Produk</h2>
+        <!-- Filter Kategori -->
+        <div class="category-filters">
+          <button class="filter-btn active" onclick="filterCategory('semua')">Semua</button>
+          <button class="filter-btn" onclick="filterCategory('Produk_Digital')">Produk Digital</button>
+          <button class="filter-btn" onclick="filterCategory('Template_Website')">Template Website</button>
+        </div>
+      </div>
+
+      <!-- Grid Tempat Produk Ditampilkan -->
+      <div class="product-grid" id="product-grid"></div>
+    </section>
+
+    <!-- ================= PANEL ADMIN (TERPROTEKSI) ================= -->
+    <section id="admin-view" class="hidden">
+      <h2>Panel Kelola Toko & Stok</h2>
+      
+      <div class="admin-card">
+        <h3>+ Tambah Produk Baru</h3>
+        <form id="add-product-form">
+          <div class="form-group">
+            <label>Nama Produk</label>
+            <input type="text" id="p-name" placeholder="Contoh: Kemeja Polos" required>
+          </div>
+          <div class="form-row">
+            <div class="form-group">
+              <label>Harga Dasar Dalam Rupiah (IDR)</label>
+              <input type="number" id="p-price" placeholder="150000" required>
+            </div>
+            <div class="form-group">
+              <label>Jumlah Stok</label>
+              <input type="number" id="p-stock" placeholder="20" required>
+            </div>
+            <div class="form-group">
+              <label>Kategori</label>
+              <select id="p-category">
+                <option value="Template_Website">Template Website</option>
+                <option value="Produk_Digital">Produk Digital</option>
+              </select>
+            </div>
+          </div>
+          <div class="form-group">
+            <label>Gambar Produk (Upload File atau Tempel URL)</label>
+            <input type="file" id="p-file" accept="image/*">
+            <input type="url" id="p-url" placeholder="https://link-gambar.com/foto.jpg" style="margin-top:5px;">
+          </div>
+          <button type="submit" class="btn-primary-green">Simpan & Tampilkan ke Toko</button>
+        </form>
+      </div>
+
+      <h3>Daftar Inventaris Barang</h3>
+      <table class="admin-table">
+        <thead>
+          <tr>
+            <th>Gambar</th>
+            <th>Nama</th>
+            <th>Kategori</th>
+            <th>Harga (IDR)</th>
+            <th>Stok</th>
+            <th>Aksi</th>
+          </tr>
+        </thead>
+        <tbody id="admin-table-body"></tbody>
+      </table>
+    </section>
+
+  </main>
+
+  <!-- MODAL 1: KERANJANG BELANJA -->
+  <div id="cart-modal" class="modal-overlay hidden">
+    <div class="modal-box">
+      <div class="modal-header">
+        <h3>Keranjang Belanja</h3>
+        <button onclick="closeCartModal()" class="close-btn">&times;</button>
+      </div>
+      <div class="cart-items-list" id="cart-items-list"></div>
+      <div class="cart-footer">
+        <div class="total-price">
+          <span>Total:</span>
+          <strong id="cart-total-price">0</strong>
+        </div>
+        <button onclick="openCheckoutModal()" class="btn-checkout" id="btn-to-checkout">Lanjut Pembayaran</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- MODAL 2: CHECKOUT & PEMBAYARAN -->
+  <div id="checkout-modal" class="modal-overlay hidden">
+    <div class="modal-box">
+      <div class="modal-header">
+        <h3>Detail Pengiriman & Pembayaran</h3>
+        <button onclick="closeCheckoutModal()" class="close-btn">&times;</button>
+      </div>
+      <form id="checkout-form">
+        <div class="form-group">
+          <label>Nama Lengkap</label>
+          <input type="text" id="cust-name" placeholder="John Doe / Budi Santoso" required>
+        </div>
+        <div class="form-group">
+          <label>Nomor WhatsApp</label>
+          <input type="tel" id="cust-phone" placeholder="081234567890" required>
+        </div>
+        <div class="form-group">
+          <label>Alamat Lengkap Pengiriman</label>
+          <textarea id="cust-address" rows="3" placeholder="Alamat lengkap tujuan pengiriman..." required></textarea>
+        </div>
+        <div class="form-group">
+          <label>Metode Pembayaran</label>
+          <select id="cust-payment">
+            <option value="Transfer Bank (BCA/Mandiri)">Transfer Bank (BCA / Mandiri)</option>
+            <option value="QRIS / E-Wallet (Gopay/OVO/ShopeePay)">QRIS / E-Wallet</option>
+            <option value="International Wire Transfer / PayPal">International Wire Transfer / PayPal</option>
+            <option value="COD (Bayar di Tempat)">COD (Bayar di Tempat)</option>
+          </select>
+        </div>
+        <button type="submit" class="btn-primary-blue">Kirim Pesanan via WhatsApp</button>
+      </form>
+    </div>
+  </div>
+
+  <!-- MODAL 3: LOGIN ADMIN -->
+  <div id="login-modal" class="modal-overlay hidden">
+    <div class="modal-box small">
+      <h3>Akses Administrator</h3>
+      <p style="font-size:0.85rem; color:#64748b; margin-top:5px;">Masukkan kata sandi pemilik toko</p>
+      <input type="password" id="admin-pass-input" placeholder="Password (Default: admin123)" style="width:100%; padding:10px; margin:15px 0; border:1px solid #cbd5e1; border-radius:6px;">
+      <div style="display:flex; gap:10px;">
+        <button onclick="closeLoginModal()" style="flex:1; padding:10px; border:none; border-radius:6px; cursor:pointer;">Batal</button>
+        <button onclick="processLogin()" style="flex:1; padding:10px; background:#2563eb; color:white; border:none; border-radius:6px; cursor:pointer; font-weight:bold;">Masuk</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Footer -->
+  <footer>
+    <p>&copy; 2026 TokoSaya. Hak Cipta Dilindungi.</p>
+    <a href="#" onclick="openLoginModal(); return false;">⚙️ Kelola Toko (Login Admin)</a>
+  </footer>
+
+  <script src="script.js"></script>
+</body>
+</html>
